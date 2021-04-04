@@ -18,6 +18,11 @@ const Game = struct {
             return error.SDLInitializationFailed;
         }
 
+        if (c.TTF_Init() == -1) {
+            c.SDL_Log("Unable to initialize SDL_ttf: %s", c.SDL_GetError());
+            return error.SDLInitializationFailed;
+        }
+
         const window = c.SDL_CreateWindow("Game", c.SDL_WINDOWPOS_UNDEFINED, c.SDL_WINDOWPOS_UNDEFINED, window_width, window_height, c.SDL_WINDOW_OPENGL) orelse
             {
             c.SDL_Log("Unable to create window: %s", c.SDL_GetError());
