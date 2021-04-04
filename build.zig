@@ -2,12 +2,13 @@ const Builder = @import("std").build.Builder;
 
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
-    const exe = b.addExecutable("sdl-zig-game", "src/main.zig");
+    const exe = b.addExecutable("game", "src/main.zig");
 
     exe.setBuildMode(mode);
     exe.addIncludeDir(".");
     exe.addLibPath("lib");
     exe.linkSystemLibrary("SDL2");
+    exe.linkSystemLibrary("SDL2_ttf");
     exe.linkSystemLibrary("c");
 
     b.default_step.dependOn(&exe.step);
