@@ -5,7 +5,7 @@ pub fn build(b: *Builder) void {
     const exe = b.addExecutable("game", "src/main.zig");
 
     exe.setBuildMode(mode);
-    exe.addIncludeDir(".");
+    exe.addIncludeDir("deps/layout");
     exe.addLibPath("lib");
     exe.linkSystemLibrary("SDL2");
     exe.linkSystemLibrary("SDL2_ttf");
