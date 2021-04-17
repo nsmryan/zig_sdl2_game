@@ -42,6 +42,8 @@ const Game = struct {
     renderer: *c.SDL_Renderer,
     font: *c.TTF_Font,
 
+    lay: c.lay_context,
+
     state: State,
 
     fn create() !Game {
@@ -92,8 +94,12 @@ const Game = struct {
             return error.SDLInitializationFailed;
         };
 
+        var lay: c.lay_context = undefined;
+        c.lay_init_context(&lay);
+        c.lay_reserve_items_capacity(&lay, 1024);
+
         const state: State = State.new();
-        var game: Game = Game{ .window = window, .texture = zig_texture, .renderer = renderer, .font = font, .state = state };
+        var game: Game = Game{ .window = window, .texture = zig_texture, .renderer = renderer, .font = font, .state = state, .lay = lay };
         return game;
     }
 
@@ -113,6 +119,7 @@ const Game = struct {
     }
 
     fn destroy(self: *Game) void {
+        c.lay_destroy_context(&self.lay);
         c.SDL_DestroyRenderer(self.renderer);
         c.SDL_DestroyTexture(self.texture);
         c.SDL_DestroyWindow(self.window);
@@ -120,29 +127,26 @@ const Game = struct {
     }
 
     fn render(self: *Game) !void {
-        var lay: c.lay_context = undefined;
-        c.lay_init_context(&lay);
-        defer c.lay_destroy_context(&lay);
-        c.lay_reserve_items_capacity(&lay, 128);
+        c.lay_reset_context(&self.lay);
 
-        var root = c.lay_item(&lay);
-        c.lay_set_size_xy(&lay, root, 800, 600);
-        c.lay_set_contain(&lay, root, c.LAY_COLUMN);
+        var root = c.lay_item(&self.lay);
+        c.lay_set_size_xy(&self.lay, root, 800, 600);
+        c.lay_set_contain(&self.lay, root, c.LAY_COLUMN);
 
-        var child = c.lay_item(&lay);
-        c.lay_insert(&lay, root, child);
-        c.lay_set_behave(&lay, child, c.LAY_CENTER | c.LAY_VFILL | c.LAY_HFILL);
+        var child = c.lay_item(&self.lay);
+        c.lay_insert(&self.lay, root, child);
+        c.lay_set_behave(&self.lay, child, c.LAY_CENTER | c.LAY_VFILL | c.LAY_HFILL);
 
         var margins: c.lay_vec4 = undefined;
         margins.x[0] = 10;
         margins.x[1] = 10;
         margins.x[2] = 10;
         margins.x[3] = 10;
-        c.lay_set_margins(&lay, child, margins);
+        c.lay_set_margins(&self.lay, child, margins);
 
-        c.lay_run_context(&lay);
+        c.lay_run_context(&self.lay);
 
-        const rect = c.lay_get_rect(&lay, child);
+        const rect = c.lay_get_rect(&self.lay, child);
         c.SDL_Log("rect %d %d %d %d\n", @intCast(c_int, rect.x[0]), @intCast(c_int, rect.x[1]), @intCast(c_int, rect.x[2]), @intCast(c_int, rect.x[3]));
 
         const width: c_int = 20 * @intCast(c_int, self.state.count);
