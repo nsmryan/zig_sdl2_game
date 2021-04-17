@@ -1,6 +1,7 @@
 const c = @cImport({
     @cInclude("SDL2/SDL.h");
     @cInclude("SDL2/SDL_ttf.h");
+    @cInclude("layout.h");
 });
 const assert = @import("std").debug.assert;
 const mem = @import("std").mem;
@@ -119,6 +120,31 @@ const Game = struct {
     }
 
     fn render(self: *Game) !void {
+        var lay: c.lay_context = undefined;
+        c.lay_init_context(&lay);
+        defer c.lay_destroy_context(&lay);
+        c.lay_reserve_items_capacity(&lay, 128);
+
+        var root = c.lay_item(&lay);
+        c.lay_set_size_xy(&lay, root, 800, 600);
+        c.lay_set_contain(&lay, root, c.LAY_COLUMN);
+
+        var child = c.lay_item(&lay);
+        c.lay_insert(&lay, root, child);
+        c.lay_set_behave(&lay, child, c.LAY_CENTER | c.LAY_VFILL | c.LAY_HFILL);
+
+        var margins: c.lay_vec4 = undefined;
+        margins.x[0] = 10;
+        margins.x[1] = 10;
+        margins.x[2] = 10;
+        margins.x[3] = 10;
+        c.lay_set_margins(&lay, child, margins);
+
+        c.lay_run_context(&lay);
+
+        const rect = c.lay_get_rect(&lay, child);
+        c.SDL_Log("rect %d %d %d %d\n", @intCast(c_int, rect.x[0]), @intCast(c_int, rect.x[1]), @intCast(c_int, rect.x[2]), @intCast(c_int, rect.x[3]));
+
         const width: c_int = 20 * @intCast(c_int, self.state.count);
         const height: c_int = 75;
         const text_rect = c.SDL_Rect{ .x = 0, .y = 0, .w = width, .h = height };
